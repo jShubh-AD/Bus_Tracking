@@ -45,22 +45,47 @@ class _HomepageState extends State<Homepage> {
 
              final data = state.busStops;
 
-             return ExpansionTile(
-               title: Text('Tir TO Kutarr'),
+             return Column(
                children: [
-                 ListView.builder(
-                     shrinkWrap: true,
-                     itemCount: (data['tirTOkutarr'] as List).length,
-                     itemBuilder: (context, index){
-                       return ListTile(
-                         title: Text(data['tirTOkutarr'][index].toString(),style: TextStyle(color: Colors.black),),
-                         subtitle: Text("stop description"),
-                         onTap: (){
-
-                         },
-                       );
-                     }
-                 )
+                 ExpansionTile(
+                   title: Text('Tir TO Kutarr'),
+                   children: [
+                     ListView.builder(
+                         physics: NeverScrollableScrollPhysics(),
+                         shrinkWrap: true,
+                         itemCount: (data['tirTOkutarr'] as List).length,
+                         itemBuilder: (context, index){
+                           return ListTile(
+                             title: Text(data['tirTOkutarr'][index].toString(),style: TextStyle(color: Colors.black),),
+                             subtitle: Text("stop description"),
+                             onTap: (){
+                               // TODO : add navigation to details page
+                             },
+                           );
+                         }
+                     )
+                   ],
+                 ),
+              //   SizedBox(height: 10),
+                 ExpansionTile(
+                   title: Text('Tir TO Ktkarr'),
+                   children: [
+                     ListView.builder(
+                       physics: NeverScrollableScrollPhysics(),
+                         shrinkWrap: true,
+                         itemCount: (data['tirtoktkarr'] as List).length,
+                         itemBuilder: (context, index){
+                           return ListTile(
+                             title: Text(data['tirtoktkarr'][index].toString(),style: TextStyle(color: Colors.black),),
+                             subtitle: Text("stop description"),
+                             onTap: (){
+                               // TODO : add navigation to details page
+                             },
+                           );
+                         }
+                     )
+                   ],
+                 ),
                ],
              );
            }

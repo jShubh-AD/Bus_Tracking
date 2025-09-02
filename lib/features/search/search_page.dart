@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../dashboard/presentation/bloc/dashboard_cubit.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -8,18 +11,131 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
+  final TextEditingController _nameCtrl = TextEditingController();
+  List<String> _suggestions = [];
+  Map<String, dynamic> _allStops = {}; // initialize with empty map
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<DashboardCubit>().fetchBusStops();
+    _nameCtrl.addListener(_onNameChanged);
+  }
+
+  void _onNameChanged() {
+    final q = _nameCtrl.text.trim().toLowerCase();
+    setState(() {
+      if (q.isEmpty) {
+        _suggestions = [];
+      } else {
+        _suggestions = _allStops.keys
+            .where((name) => name.toLowerCase().contains(q))
+            .toList();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        centerTitle: true,
+        title: const Text('Search Stop'),
+      ),
+      body: BlocBuilder<DashboardCubit, DashboardState>(
+        builder: (context, state) {
+          if (state is DashboardLoading || state is DashboardInitial) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (state is DashboardLoaded) {
+
+            _allStops = {
+              for (var stop in state.busStops['tirTOkutarr']) stop: {},
+              for (var stop in state.busStops['tirtoktkarr']) stop: {},
+            };
+
+            return _buildSearchUI();
+          }
+
+          if (state is ErrorLoadingDashBoard) {
+            return Center(child: Text(state.message));
+          }
+
+          return const SizedBox.shrink();
+        },
+      ),
+    );
+  }
+
+  Widget _buildSearchUI() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: _nameCtrl,
+            decoration: InputDecoration(
+              hintText: 'Search by stop…',
+              prefixIcon: const Icon(Icons.search),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              filled: true,
+              fillColor: const Color(0xFFF1F4FF),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+          if (_nameCtrl.text.trim().isNotEmpty && _suggestions.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.only(top: 8),
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.3,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: _suggestions.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (ctx, i) {
+                  final name = _suggestions[i];
+                  return ListTile(
+                    title: Text(name),
+                    onTap: () {
+                      setState(() {
+                        _nameCtrl.text = name;
+                        Navigator.pop(context, name);
+                      });
+                      FocusScope.of(context).unfocus();
+                    },
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/*class _SearchPageState extends State<SearchPage> {
 
   final TextEditingController _nameCtrl = TextEditingController();
   List<String> _suggestions = [];
-  Map<String,dynamic> _allStops = {};
+  late final Map<String,dynamic> _allStops;
 
   @override
   void initState() {
     super.initState();
 
-   // context.read<DashboardCubit>().fetchBusStops();
-
-    _nameCtrl.addListener(_onNameChanged);
+    context.read<DashboardCubit>().fetchBusStops();
+     _nameCtrl.addListener(_onNameChanged);
   }
 
   void _onNameChanged() {
@@ -114,4 +230,4 @@ class _SearchPageState extends State<SearchPage> {
       ),
     );
   }
-}
+}*/
