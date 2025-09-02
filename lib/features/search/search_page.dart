@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/share_prederence/share_preferences.dart';
 import '../dashboard/presentation/bloc/dashboard_cubit.dart';
 
 class SearchPage extends StatefulWidget {
@@ -11,15 +12,25 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
+
+  List<String> favorites = [];
   final TextEditingController _nameCtrl = TextEditingController();
-  List<String> _suggestions = [];
-  Map<String, dynamic> _allStops = {}; // initialize with empty map
+  List<Map<String, dynamic>> _suggestions = [];
+  List<Map<String, dynamic>> _allStops = [];
 
   @override
   void initState() {
     super.initState();
     context.read<DashboardCubit>().fetchBusStops();
     _nameCtrl.addListener(_onNameChanged);
+    _getAllFavStops();
+  }
+
+  Future<void> _getAllFavStops() async {
+    final favs = await SharePreference.getFavorites();
+    setState(() {
+      favorites = favs;
+    });
   }
 
   void _onNameChanged() {
@@ -28,8 +39,8 @@ class _SearchPageState extends State<SearchPage> {
       if (q.isEmpty) {
         _suggestions = [];
       } else {
-        _suggestions = _allStops.keys
-            .where((name) => name.toLowerCase().contains(q))
+        _suggestions = _allStops
+            .where((name) => name['stopname'].toString().toLowerCase().contains(q))
             .toList();
       }
     });
@@ -50,12 +61,42 @@ class _SearchPageState extends State<SearchPage> {
           }
 
           if (state is DashboardLoaded) {
+            _allStops = [];
 
-            _allStops = {
-              for (var stop in state.busStops['tirTOkutarr']) stop: {},
-              for (var stop in state.busStops['tirtoktkarr']) stop: {},
-            };
+            // Merge all routes into one list
+            for (var routeKey in [
+              'tirTOkutarr',
+              'tirtoktkarr',
+              'tirTOkuttp',
+              'ktklTotir',
+              'tirToktkl',
+            ]) {
+              final stops = state.busStops[routeKey] as List<dynamic>;
+              for (var stop in stops) {
+                if (stop is String) {
+                  _allStops.add({
+                    'stopname': stop,
+                    'latitude': 'N/A',
+                    'longitude': 'N/A',
+                    'stopTime': 'N/A',
+                    'timedifference': 'N/A',
+                  });
+                } else if (stop is Map<String, dynamic>) {
+                  _allStops.add({
+                    'stopname': stop['stopname'] ?? 'Unknown',
+                    'latitude': stop['latitude'] ?? 'N/A',
+                    'longitude': stop['longitude'] ?? 'N/A',
+                    'stopTime':
+                    (stop['stopTime']?.toString().isEmpty ?? true)
+                        ? 'N/A'
+                        : stop['stopTime'],
+                    'timedifference': stop['timedifference'] ?? 'N/A',
+                  });
+                }
+              }
+            }
 
+            return _buildSearchUI();
             return _buildSearchUI();
           }
 
@@ -93,27 +134,44 @@ class _SearchPageState extends State<SearchPage> {
             Container(
               margin: const EdgeInsets.only(top: 8),
               constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.3,
+                maxHeight: MediaQuery.of(context).size.height * 0.8,
               ),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: ListView.separated(
+               // physics: NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
                 itemCount: _suggestions.length,
                 separatorBuilder: (_, __) => const Divider(height: 1),
                 itemBuilder: (ctx, i) {
-                  final name = _suggestions[i];
+                  final stop = _suggestions[i];
                   return ListTile(
-                    title: Text(name),
-                    onTap: () {
-                      setState(() {
-                        _nameCtrl.text = name;
-                        Navigator.pop(context, name);
-                      });
-                      FocusScope.of(context).unfocus();
-                    },
+                    title: Text(
+                      stop['stopname'],
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    subtitle: Text(
+                      "Lat: ${stop['latitude']}, Lng: ${stop['longitude']}\n"
+                          "Time: ${stop['stopTime']}  |  Diff: ${stop['timedifference']} mins",
+                    ),
+                    isThreeLine: true,
+                    trailing: IconButton(
+                      icon: Icon(
+                        favorites.contains(stop)
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color: Colors.red,
+                      ),
+                      onPressed: () async {
+                        await SharePreference.toggleFavorite(stop["stopname"]);
+                        await _getAllFavStops(); // reload favorites
+                      },
+                    ),
                   );
                 },
               ),
@@ -123,111 +181,3 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 }
-
-/*class _SearchPageState extends State<SearchPage> {
-
-  final TextEditingController _nameCtrl = TextEditingController();
-  List<String> _suggestions = [];
-  late final Map<String,dynamic> _allStops;
-
-  @override
-  void initState() {
-    super.initState();
-
-    context.read<DashboardCubit>().fetchBusStops();
-     _nameCtrl.addListener(_onNameChanged);
-  }
-
-  void _onNameChanged() {
-    final q = _nameCtrl.text.trim().toLowerCase();
-    setState(() {
-      if (q.isEmpty) {
-        _suggestions = [];
-      } else {
-        _suggestions = _allStops.keys
-            .where((name) => name.toLowerCase().contains(q))
-            .toList();
-      }
-    });
-  }
-
-
-  @override
-  Widget build(BuildContext context) {
-   // final isExactMatch = _allStops.contains(typed);
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        centerTitle: true,
-        title: const Text('Search Stop'),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                controller: _nameCtrl,
-                decoration: InputDecoration(
-                  hintText: 'Search by stop…',
-                  prefixIcon: const Icon(Icons.search),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                  filled: true,
-                  fillColor: const Color(0xFFF1F4FF),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-              if (_nameCtrl.text.trim().isNotEmpty && (_suggestions.isNotEmpty /*|| !isExactMatch*/))
-                Container(
-                  margin: const EdgeInsets.only(top: 8),
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height * 0.3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: _suggestions.isNotEmpty
-                  // 1) matching suggestions
-                      ? ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: _suggestions.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (ctx, i) {
-                      final name = _suggestions[i];
-                      return ListTile(
-                        title: Text( name),
-                        onTap: () {
-                          setState(() {
-                            _nameCtrl.text  = name;
-                           // context.read<DashboardCubit>().fetchCityFromPreferences();
-                            Navigator.pop(context);
-                          });
-                          FocusScope.of(context).unfocus();
-                        },
-                      );
-                    },
-                  )
-                  // 2) no matches & not an exact match
-                      : ListTile(
-                      title: Text(
-                        'No Stops Found for: ${_nameCtrl.text}',
-                      ),
-                      onTap: () {
-                        setState(() {_suggestions.clear();
-                        });
-                      }
-                  ),
-                ),
-              const SizedBox(height: 20)
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}*/
