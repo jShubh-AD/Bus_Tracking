@@ -1,9 +1,14 @@
+import 'package:bus_tracking/core/share_prederence/share_preferences.dart';
 import 'package:bus_tracking/features/dashboard/presentation/bloc/dashboard_cubit.dart';
 import 'package:bus_tracking/features/dashboard/presentation/view/homepage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-void main() {
+void main() async{
+
+  WidgetsFlutterBinding.ensureInitialized();
+  await SharePreference.init();
+
   runApp(
     MultiBlocProvider(
       providers: [
