@@ -48,7 +48,7 @@ class _HomepageState extends State<Homepage> {
              return Column(
                children: [
                  ExpansionTile(
-                   title: Text('Tir TO Kutarr'),
+                   title: Text('Tir to Kutarr'),
                    children: [
                      ListView.builder(
                          physics: NeverScrollableScrollPhysics(),
@@ -66,9 +66,8 @@ class _HomepageState extends State<Homepage> {
                      )
                    ],
                  ),
-              //   SizedBox(height: 10),
                  ExpansionTile(
-                   title: Text('Tir TO Ktkarr'),
+                   title: Text('Tir to Ktkarr'),
                    children: [
                      ListView.builder(
                        physics: NeverScrollableScrollPhysics(),
@@ -81,6 +80,84 @@ class _HomepageState extends State<Homepage> {
                              onTap: (){
                                // TODO : add navigation to details page
                              },
+                           );
+                         }
+                     )
+                   ],
+                 ),
+                 ExpansionTile(
+                   title: Text('Tir to Kuttp'),
+                   children: [
+                     ListView.builder(
+                         physics: NeverScrollableScrollPhysics(),
+                         shrinkWrap: true,
+                         itemCount: (data['tirTOkuttp'] as List).length,
+                         itemBuilder: (context, index){
+                           final stop = data['tirTOkuttp'][index];
+
+                           return ListTile(
+                             title: Text(
+                               stop['stopname'],
+                               style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                             ),
+                             subtitle: Text(
+                               "Lat: ${stop['latitude']}, Lng: ${stop['longitude']}\n"
+                                   "Time: ${stop['stopTime'].isEmpty ? 'N/A' : stop['stopTime']}  |  "
+                                   "Diff: ${stop['timedifference']} mins",
+                             ),
+                             isThreeLine: true, // so subtitle can take 2 lines
+                           );
+                         }
+                     )
+                   ],
+                 ),
+                 ExpansionTile(
+                   title: Text('Ktkl to Tir'),
+                   children: [
+                     ListView.builder(
+                         physics: NeverScrollableScrollPhysics(),
+                         shrinkWrap: true,
+                         itemCount: (data['ktklTotir'] as List).length,
+                         itemBuilder: (context, index){
+                           final stop = data['ktklTotir'][index];
+
+                           return ListTile(
+                             title: Text(
+                               stop['stopname'],
+                               style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                             ),
+                             subtitle: Text(
+                               "Lat: ${stop['latitude']}, Lng: ${stop['longitude']}\n"
+                                   "Time: ${stop['stopTime'].isEmpty ? 'N/A' : stop['stopTime']}  |  "
+                                   "Diff: ${stop['timedifference']} mins",
+                             ),
+                             isThreeLine: true, // so subtitle can take 2 lines
+                           );
+                         }
+                     )
+                   ],
+                 ),
+                 ExpansionTile(
+                   title: Text('Tir to Ktkl'),
+                   children: [
+                     ListView.builder(
+                         physics: NeverScrollableScrollPhysics(),
+                         shrinkWrap: true,
+                         itemCount: (data['tirToktkl'] as List).length,
+                         itemBuilder: (context, index){
+                           final stop = data['tirToktkl'][index];
+
+                           return ListTile(
+                             title: Text(
+                               stop['stopname'],
+                               style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                             ),
+                             subtitle: Text(
+                               "Lat: ${stop['latitude']}, Lng: ${stop['longitude']}\n"
+                                   "Time: ${stop['stopTime'].isEmpty ? 'N/A' : stop['stopTime']}  |  "
+                                   "Diff: ${stop['timedifference']} mins",
+                             ),
+                             isThreeLine: true, // so subtitle can take 2 lines
                            );
                          }
                      )
